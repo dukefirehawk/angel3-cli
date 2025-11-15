@@ -17,14 +17,21 @@ class TestCommand extends Command {
 
   TestCommand() {
     argParser
-      ..addFlag('run-configuration',
-          help: 'Generate a run configuration for JetBrains IDE\'s.',
-          defaultsTo: true)
-      ..addOption('name',
-          abbr: 'n', help: 'Specifies a name for the plug-in class.')
-      ..addOption('output-dir',
-          help: 'Specifies a directory to create the plug-in class in.',
-          defaultsTo: 'test');
+      ..addFlag(
+        'run-configuration',
+        help: 'Generate a run configuration for JetBrains IDE\'s.',
+        defaultsTo: true,
+      )
+      ..addOption(
+        'name',
+        abbr: 'n',
+        help: 'Specifies a name for the plug-in class.',
+      )
+      ..addOption(
+        'output-dir',
+        help: 'Specifies a directory to create the plug-in class in.',
+        defaultsTo: 'test',
+      );
   }
 
   @override
@@ -47,28 +54,41 @@ class TestCommand extends Command {
 
     var rc = ReCase(name!);
     final testDir = Directory.fromUri(
-        Directory.current.uri.resolve(argResults?['output-dir'] as String));
-    final testFile =
-        File.fromUri(testDir.uri.resolve('${rc.snakeCase}_test.dart'));
+      Directory.current.uri.resolve(argResults?['output-dir'] as String),
+    );
+    final testFile = File.fromUri(
+      testDir.uri.resolve('${rc.snakeCase}_test.dart'),
+    );
     if (!await testFile.exists()) await testFile.create(recursive: true);
     await testFile.writeAsString(
-        DartFormatter(languageVersion: DartFormatter.latestLanguageVersion)
-            .format(_generateTest(pubspec, rc)));
+      DartFormatter(
+        languageVersion: DartFormatter.latestLanguageVersion,
+      ).format(_generateTest(pubspec, rc)),
+    );
 
     if (deps.isNotEmpty) await depend(deps);
 
-    print(green.wrap(
-        '$checkmark Successfully generated test file "${testFile.absolute.path}".'));
+    print(
+      green.wrap(
+        '$checkmark Successfully generated test file "${testFile.absolute.path}".',
+      ),
+    );
 
     if (argResults!['run-configuration'] as bool) {
-      final runConfig = File.fromUri(Directory.current.uri
-          .resolve('.idea/runConfigurations/${name}_Tests.xml'));
+      final runConfig = File.fromUri(
+        Directory.current.uri.resolve(
+          '.idea/runConfigurations/${name}_Tests.xml',
+        ),
+      );
 
       if (!await runConfig.exists()) await runConfig.create(recursive: true);
       await runConfig.writeAsString(_generateRunConfiguration(name, rc));
 
-      print(green.wrap(
-          '$checkmark Successfully generated run configuration "$name Tests" at "${runConfig.absolute.path}".'));
+      print(
+        green.wrap(
+          '$checkmark Successfully generated run configuration "$name Tests" at "${runConfig.absolute.path}".',
+        ),
+      );
     }
   }
 

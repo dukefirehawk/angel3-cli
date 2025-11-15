@@ -10,7 +10,9 @@ void main() async {
 
     if (content.contains('package:$oldName/$oldName.dart')) {
       return content.replaceFirst(
-          'package:$oldName/$oldName.dart', 'package:$newName/$newName.dart');
+        'package:$oldName/$oldName.dart',
+        'package:$newName/$newName.dart',
+      );
     }
 
     if (content.contains('package:$oldName/')) {

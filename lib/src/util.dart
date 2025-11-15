@@ -19,9 +19,9 @@ Directory get angelDir => Directory(p.join(homeDir.path, '.angel'));
 Future<Pubspec> loadPubspec([Directory? directory]) {
   directory ??= Directory.current;
   var file = File.fromUri(directory.uri.resolve('pubspec.yaml'));
-  return file
-      .readAsString()
-      .then((yaml) => Pubspec.parse(yaml, sourceUrl: file.uri));
+  return file.readAsString().then(
+    (yaml) => Pubspec.parse(yaml, sourceUrl: file.uri),
+  );
 }
 
 // From: https://gist.github.com/tobischw/98dcd2563eec9a2a87bda8299055358a
@@ -33,8 +33,9 @@ Future<void> copyDirectory(Directory source, Directory destination) async {
   await for (var entity in source.list(recursive: false)) {
     if (p.basename(entity.path) == '.git') continue;
     if (entity is Directory) {
-      var newDirectory =
-          Directory(p.join(destination.absolute.path, p.basename(entity.path)));
+      var newDirectory = Directory(
+        p.join(destination.absolute.path, p.basename(entity.path)),
+      );
       await newDirectory.create(recursive: true);
       await copyDirectory(entity.absolute, newDirectory);
     } else if (entity is File) {

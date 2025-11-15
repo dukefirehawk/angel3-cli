@@ -22,13 +22,18 @@ class InitCommand extends Command {
 
   InitCommand() {
     argParser
-      ..addFlag('offline',
-          help:
-              'Disable online fetching of boilerplates. Also disables `pub-get`.',
-          negatable: false)
+      ..addFlag(
+        'offline',
+        help:
+            'Disable online fetching of boilerplates. Also disables `pub-get`.',
+        negatable: false,
+      )
       ..addFlag('pub-get', defaultsTo: true)
-      ..addOption('project-name',
-          abbr: 'n', help: 'The name for this project.');
+      ..addOption(
+        'project-name',
+        abbr: 'n',
+        help: 'The name for this project.',
+      );
   }
 
   @override
@@ -38,25 +43,31 @@ class InitCommand extends Command {
       return;
     }
 
-    var projectDir =
-        Directory(argResults!.rest.isEmpty ? '.' : argResults!.rest[0]);
+    var projectDir = Directory(
+      argResults!.rest.isEmpty ? '.' : argResults!.rest[0],
+    );
     print('Creating new Angel3 project in ${projectDir.absolute.path}...');
     await _cloneRepo(projectDir);
     // await preBuild(projectDir);
     var secret = rs.randomAlphaNumeric(32);
     print('Generated new development JWT secret: $secret');
     await _key.changeSecret(
-        File.fromUri(projectDir.uri.resolve('config/default.yaml')), secret);
+      File.fromUri(projectDir.uri.resolve('config/default.yaml')),
+      secret,
+    );
 
     secret = rs.randomAlphaNumeric(32);
     print('Generated new production JWT secret: $secret');
     await _key.changeSecret(
-        File.fromUri(projectDir.uri.resolve('config/production.yaml')), secret);
+      File.fromUri(projectDir.uri.resolve('config/production.yaml')),
+      secret,
+    );
 
     var name = argResults!.wasParsed('project-name')
         ? (argResults!['project-name'] as String)
         : p.basenameWithoutExtension(
-            projectDir.absolute.uri.normalizePath().toFilePath());
+            projectDir.absolute.uri.normalizePath().toFilePath(),
+          );
 
     name = ReCase(name).snakeCase;
     print('Renaming project from "angel" to "$name"...');
@@ -74,7 +85,8 @@ class InitCommand extends Command {
     stdout
       ..writeln()
       ..writeln(
-          'Congratulations! You are ready to start developing with Angel3!')
+        'Congratulations! You are ready to start developing with Angel3!',
+      )
       ..write('To start the server (with ')
       ..write(cyan.wrap('hot-reloading'))
       ..write('), run ')
@@ -84,10 +96,10 @@ class InitCommand extends Command {
       ..writeln('Find more documentation about Angel3:')
       ..writeln('  * https://angel3-framework.web.app')
       ..writeln('  * https://angel3-docs.dukefirehawk.com')
-//      ..writeln(
-//          '  * https://www.youtube.com/playlist?list=PLl3P3tmiT-frEV50VdH_cIrA2YqIyHkkY')
-//      ..writeln('  * https://medium.com/the-angel-framework')
-//      ..writeln('  * https://dart.academy/tag/angel')
+      //      ..writeln(
+      //          '  * https://www.youtube.com/playlist?list=PLl3P3tmiT-frEV50VdH_cIrA2YqIyHkkY')
+      //      ..writeln('  * https://medium.com/the-angel-framework')
+      //      ..writeln('  * https://dart.academy/tag/angel')
       ..writeln()
       ..writeln('Happy coding!');
   }
@@ -134,7 +146,8 @@ class InitCommand extends Command {
     try {
       if (await projectDir.exists()) {
         var shouldDelete = prompts.getBool(
-            "Directory '${projectDir.absolute.path}' already exists. Overwrite it?");
+          "Directory '${projectDir.absolute.path}' already exists. Overwrite it?",
+        );
 
         if (!shouldDelete) {
           throw 'Chose not to overwrite existing directory.';
@@ -149,8 +162,11 @@ class InitCommand extends Command {
       // var boilerplate = basicBoilerplate;
       print('Choose a project type before continuing:');
 
-      var boilerplate = prompts.choose(
-              'Choose a project type before continuing', boilerplates) ??
+      var boilerplate =
+          prompts.choose(
+            'Choose a project type before continuing',
+            boilerplates,
+          ) ??
           basicBoilerplate;
 
       // Ultimately, we want a clone of every boilerplate locally on the system.
@@ -159,8 +175,9 @@ class InitCommand extends Command {
       if (boilerplate.ref != '') {
         boilerplateBasename += '.${boilerplate.ref}';
       }
-      boilerplateDir =
-          Directory(p.join(boilerplateRootDir.path, boilerplateBasename));
+      boilerplateDir = Directory(
+        p.join(boilerplateRootDir.path, boilerplateBasename),
+      );
       await boilerplateRootDir.create(recursive: true);
 
       var branch = boilerplate.ref;
@@ -172,65 +189,73 @@ class InitCommand extends Command {
       if (!await boilerplateDir.exists()) {
         if (argResults!['offline'] as bool) {
           throw Exception(
-              '--offline was selected, but the "${boilerplate.name}" boilerplate has not yet been downloaded.');
+            '--offline was selected, but the "${boilerplate.name}" boilerplate has not yet been downloaded.',
+          );
         }
 
         print(
-            'Cloning "${boilerplate.name}" boilerplate from "${boilerplate.url}"...');
+          'Cloning "${boilerplate.name}" boilerplate from "${boilerplate.url}"...',
+        );
         Process git;
 
         if (boilerplate.ref == '') {
-          print(darkGray.wrap(
-              '\$ git clone --depth 1 ${boilerplate.url} ${boilerplateDir.absolute.path}'));
-          git = await Process.start(
-            'git',
-            [
-              'clone',
-              '--depth',
-              '1',
-              boilerplate.url,
-              boilerplateDir.absolute.path
-            ],
-            mode: ProcessStartMode.inheritStdio,
+          print(
+            darkGray.wrap(
+              '\$ git clone --depth 1 ${boilerplate.url} ${boilerplateDir.absolute.path}',
+            ),
           );
+          git = await Process.start('git', [
+            'clone',
+            '--depth',
+            '1',
+            boilerplate.url,
+            boilerplateDir.absolute.path,
+          ], mode: ProcessStartMode.inheritStdio);
         } else {
           // git clone --single-branch -b branch host:/dir.git
-          print(darkGray.wrap(
-              '\$ git clone --depth 1 --single-branch -b ${boilerplate.ref} ${boilerplate.url} ${boilerplateDir.absolute.path}'));
-          git = await Process.start(
-            'git',
-            [
-              'clone',
-              '--depth',
-              '1',
-              '--single-branch',
-              '-b',
-              boilerplate.ref,
-              boilerplate.url,
-              boilerplateDir.absolute.path
-            ],
-            mode: ProcessStartMode.inheritStdio,
+          print(
+            darkGray.wrap(
+              '\$ git clone --depth 1 --single-branch -b ${boilerplate.ref} ${boilerplate.url} ${boilerplateDir.absolute.path}',
+            ),
           );
+          git = await Process.start('git', [
+            'clone',
+            '--depth',
+            '1',
+            '--single-branch',
+            '-b',
+            boilerplate.ref,
+            boilerplate.url,
+            boilerplateDir.absolute.path,
+          ], mode: ProcessStartMode.inheritStdio);
         }
 
         if (await git.exitCode != 0) {
           throw Exception('Could not clone repo.');
         }
       }
-
       // Otherwise, pull from git.
       else if (!(argResults!['offline'] as bool)) {
         print(darkGray.wrap('\$ git pull origin $branch'));
-        var git = await Process.start('git', ['pull', 'origin', branch],
-            mode: ProcessStartMode.inheritStdio,
-            workingDirectory: boilerplateDir.absolute.path);
+        var git = await Process.start(
+          'git',
+          ['pull', 'origin', branch],
+          mode: ProcessStartMode.inheritStdio,
+          workingDirectory: boilerplateDir.absolute.path,
+        );
         if (await git.exitCode != 0) {
-          print(yellow.wrap(
-              'Update of $branch failed. Attempting to continue with existing contents.'));
+          print(
+            yellow.wrap(
+              'Update of $branch failed. Attempting to continue with existing contents.',
+            ),
+          );
         }
       } else {
-        print(darkGray.wrap(
-            'Using existing contents of "${boilerplate.name}" boilerplate.'));
+        print(
+          darkGray.wrap(
+            'Using existing contents of "${boilerplate.name}" boilerplate.',
+          ),
+        );
       }
 
       // Next, just copy everything into the given directory.
@@ -259,9 +284,12 @@ class InitCommand extends Command {
     var dartPath = "dart";
     print(darkGray.wrap('Running "$dartPath"...'));
     print(darkGray.wrap('\$ $dartPath pub get'));
-    var dart = await Process.start(dartPath, ['pub', 'get'],
-        workingDirectory: projectDir.absolute.path,
-        mode: ProcessStartMode.inheritStdio);
+    var dart = await Process.start(
+      dartPath,
+      ['pub', 'get'],
+      workingDirectory: projectDir.absolute.path,
+      mode: ProcessStartMode.inheritStdio,
+    );
     var code = await dart.exitCode;
     print('Dart process exited with code $code');
   }
@@ -272,9 +300,12 @@ Future preBuild(Directory projectDir) async {
   // print('Running `dart run build_runner build`...');
   print(darkGray.wrap('\$ dart run build_runner build'));
 
-  var build = await Process.start("dart", ['run', 'build_runner', 'build'],
-      workingDirectory: projectDir.absolute.path,
-      mode: ProcessStartMode.inheritStdio);
+  var build = await Process.start(
+    "dart",
+    ['run', 'build_runner', 'build'],
+    workingDirectory: projectDir.absolute.path,
+    mode: ProcessStartMode.inheritStdio,
+  );
 
   var buildCode = await build.exitCode;
 
@@ -305,15 +336,17 @@ const BoilerplateInfo ormMySqlBoilerplate = BoilerplateInfo(
 );
 
 const BoilerplateInfo basicBoilerplate = BoilerplateInfo(
-    'Basic',
-    'A basic starter application with minimal packages.',
-    '$repoLocation/boilerplates.git',
-    ref: 'v7/angel3-basic');
+  'Basic',
+  'A basic starter application with minimal packages.',
+  '$repoLocation/boilerplates.git',
+  ref: 'v7/angel3-basic',
+);
 
 const BoilerplateInfo sharedBoilerplate = BoilerplateInfo(
-    'Shared',
-    'Holds common models and files shared across multiple Dart projects.',
-    '$repoLocation/boilerplate_shared.git');
+  'Shared',
+  'Holds common models and files shared across multiple Dart projects.',
+  '$repoLocation/boilerplate_shared.git',
+);
 
 const BoilerplateInfo sharedOrmBoilerplate = BoilerplateInfo(
   'Shared (ORM)',
@@ -336,8 +369,13 @@ class BoilerplateInfo {
   final String ref;
   final bool needsPrebuild;
 
-  const BoilerplateInfo(this.name, this.description, this.url,
-      {this.ref = '', this.needsPrebuild = false});
+  const BoilerplateInfo(
+    this.name,
+    this.description,
+    this.url, {
+    this.ref = '',
+    this.needsPrebuild = false,
+  });
 
   @override
   String toString() => '$name ($description)';

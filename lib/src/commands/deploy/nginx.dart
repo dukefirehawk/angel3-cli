@@ -13,16 +13,18 @@ class NginxCommand extends Command {
       'Generates a NGINX configuration for a reverse proxy + static server.';
 
   NginxCommand() {
-    argParser.addOption('out',
-        abbr: 'o',
-        help:
-            'An optional output file to write to; otherwise prints to stdout.');
+    argParser.addOption(
+      'out',
+      abbr: 'o',
+      help: 'An optional output file to write to; otherwise prints to stdout.',
+    );
   }
 
   @override
   Future run() async {
     var webPath = p.join(p.current, 'web');
-    var nginxText = '''
+    var nginxText =
+        '''
 server {
   listen 80 default_server;
   root ${p.absolute(webPath)}; # Set to your static files directory
@@ -37,7 +39,7 @@ server {
   }
 }
     '''
-        .trim();
+            .trim();
 
     if (!argResults!.wasParsed('out')) {
       print(nginxText);
@@ -45,8 +47,11 @@ server {
       var file = File(argResults!['out'] as String);
       await file.create(recursive: true);
       await file.writeAsString(nginxText);
-      print(green.wrap(
-          "$checkmark Successfully generated nginx configuration in '${file.path}'."));
+      print(
+        green.wrap(
+          "$checkmark Successfully generated nginx configuration in '${file.path}'.",
+        ),
+      );
     }
   }
 }

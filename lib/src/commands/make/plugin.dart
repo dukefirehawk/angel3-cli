@@ -17,11 +17,16 @@ class PluginCommand extends Command {
 
   PluginCommand() {
     argParser
-      ..addOption('name',
-          abbr: 'n', help: 'Specifies a name for the plug-in class.')
-      ..addOption('output-dir',
-          help: 'Specifies a directory to create the plug-in class in.',
-          defaultsTo: 'lib/src/config/plugins');
+      ..addOption(
+        'name',
+        abbr: 'n',
+        help: 'Specifies a name for the plug-in class.',
+      )
+      ..addOption(
+        'output-dir',
+        help: 'Specifies a directory to create the plug-in class in.',
+        defaultsTo: 'lib/src/config/plugins',
+      );
   }
 
   @override
@@ -37,23 +42,30 @@ class PluginCommand extends Command {
     }
 
     var deps = <MakerDependency>[
-      const MakerDependency('angel3_framework', '^7.0.0')
+      const MakerDependency('angel3_framework', '^7.0.0'),
     ];
 
     var rc = ReCase(name!);
     final pluginDir = Directory.fromUri(
-        Directory.current.uri.resolve(argResults!['output-dir'] as String));
-    final pluginFile =
-        File.fromUri(pluginDir.uri.resolve('${rc.snakeCase}.dart'));
+      Directory.current.uri.resolve(argResults!['output-dir'] as String),
+    );
+    final pluginFile = File.fromUri(
+      pluginDir.uri.resolve('${rc.snakeCase}.dart'),
+    );
     if (!await pluginFile.exists()) await pluginFile.create(recursive: true);
     await pluginFile.writeAsString(
-        DartFormatter(languageVersion: DartFormatter.latestLanguageVersion)
-            .format(_generatePlugin(pubspec, rc)));
+      DartFormatter(
+        languageVersion: DartFormatter.latestLanguageVersion,
+      ).format(_generatePlugin(pubspec, rc)),
+    );
 
     if (deps.isNotEmpty) await depend(deps);
 
-    print(green.wrap(
-        '$checkmark Successfully generated plug-in file "${pluginFile.absolute.path}".'));
+    print(
+      green.wrap(
+        '$checkmark Successfully generated plug-in file "${pluginFile.absolute.path}".',
+      ),
+    );
   }
 
   String _generatePlugin(Pubspec pubspec, ReCase rc) {

@@ -14,16 +14,23 @@ class SystemdCommand extends Command {
 
   SystemdCommand() {
     argParser
-      ..addOption('install',
-          abbr: 'i', help: 'A name to install this service as on the system.')
-      ..addOption('user',
-          abbr: 'u',
-          defaultsTo: 'web',
-          help: 'The name of the unprivileged account to run the server as.')
-      ..addOption('out',
-          abbr: 'o',
-          help:
-              'An optional output file to write to; otherwise prints to stdout.');
+      ..addOption(
+        'install',
+        abbr: 'i',
+        help: 'A name to install this service as on the system.',
+      )
+      ..addOption(
+        'user',
+        abbr: 'u',
+        defaultsTo: 'web',
+        help: 'The name of the unprivileged account to run the server as.',
+      )
+      ..addOption(
+        'out',
+        abbr: 'o',
+        help:
+            'An optional output file to write to; otherwise prints to stdout.',
+      );
   }
 
   @override
@@ -31,7 +38,8 @@ class SystemdCommand extends Command {
     var projectPath = p.absolute(p.current);
     var pubspec = await loadPubspec();
     var user = argResults?['user'];
-    var systemdText = '''
+    var systemdText =
+        '''
 [Unit]
 Description=`${pubspec.name}` server
 
@@ -45,7 +53,7 @@ Restart=always # Restart process on crash
 [Install]
 WantedBy=multi-user.target
     '''
-        .trim();
+            .trim();
 
     if (argResults?.wasParsed('out') != true &&
         argResults?.wasParsed('install') != true) {
@@ -54,13 +62,18 @@ WantedBy=multi-user.target
       var systemdPath = argResults?.wasParsed('out') == true
           ? (argResults?['out'] as String)
           : p.join('etc', 'systemd', 'system');
-      var serviceFilename = p.join(systemdPath,
-          p.setExtension(argResults?['install'] as String, '.service'));
+      var serviceFilename = p.join(
+        systemdPath,
+        p.setExtension(argResults?['install'] as String, '.service'),
+      );
       var file = File(serviceFilename);
       await file.create(recursive: true);
       await file.writeAsString(systemdText);
-      print(green.wrap(
-          "$checkmark Successfully generated systemd service in '${file.path}'."));
+      print(
+        green.wrap(
+          "$checkmark Successfully generated systemd service in '${file.path}'.",
+        ),
+      );
 
       // sudo systemctl daemon-reload
       if (await runCommand('sudo', ['systemctl', 'daemon-reload'])) {
@@ -68,7 +81,7 @@ WantedBy=multi-user.target
         if (await runCommand('sudo', [
           'service',
           p.basenameWithoutExtension(serviceFilename),
-          'start'
+          'start',
         ])) {
         } else {
           print(red.wrap('$ballot Failed to install service system-wide.'));
@@ -80,8 +93,11 @@ WantedBy=multi-user.target
       var file = File(argResults?['out'] as String);
       await file.create(recursive: true);
       await file.writeAsString(systemdText);
-      print(green.wrap(
-          "$checkmark Successfully generated systemd service in '${file.path}'."));
+      print(
+        green.wrap(
+          "$checkmark Successfully generated systemd service in '${file.path}'.",
+        ),
+      );
     }
   }
 }

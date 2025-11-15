@@ -1,5 +1,12 @@
 # Change Log
 
+## 8.4.0
+
+* Required Dart SDK > 3.9
+* Updated to `analyzer` 8.x.x
+* Updated `lints` to 6.0.0
+* Updated dependencies
+
 ## 8.3.0
 
 * Required Dart SDK > 3.6
