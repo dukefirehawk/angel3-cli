@@ -19,11 +19,16 @@ class MigrationCommand extends Command {
 
   MigrationCommand() {
     argParser
-      ..addOption('name',
-          abbr: 'n', help: 'Specifies a name for the model class.')
-      ..addOption('output-dir',
-          help: 'Specifies a directory to create the migration class in.',
-          defaultsTo: 'tool/migrations');
+      ..addOption(
+        'name',
+        abbr: 'n',
+        help: 'Specifies a name for the model class.',
+      )
+      ..addOption(
+        'output-dir',
+        help: 'Specifies a directory to create the migration class in.',
+        defaultsTo: 'tool/migrations',
+      );
   }
 
   @override
@@ -42,95 +47,122 @@ class MigrationCommand extends Command {
 
     var migrationLib = Library((migrationLib) {
       migrationLib
-        ..directives.add(Directive.import(
-            'package:angel3_migration.dart/angel3_migration.dart'))
-        ..body.add(Class((migrationClazz) {
-          migrationClazz
-            ..name = '${rc.pascalCase}Migration'
-            ..extend = refer('Migration');
+        ..directives.add(
+          Directive.import(
+            'package:angel3_migration.dart/angel3_migration.dart',
+          ),
+        )
+        ..body.add(
+          Class((migrationClazz) {
+            migrationClazz
+              ..name = '${rc.pascalCase}Migration'
+              ..extend = refer('Migration');
 
-          var tableName = pluralize(rc.snakeCase);
+            var tableName = pluralize(rc.snakeCase);
 
-          // up()
-          migrationClazz.methods.add(Method((up) {
-            up
-              ..name = 'up'
-              ..returns = refer('void')
-              ..annotations.add(refer('override'))
-              ..requiredParameters.add(Parameter((b) => b
-                ..name = 'schema'
-                ..type = refer('Schema')))
-              ..body = Block((block) {
-                // (table) { ... }
-                var callback = Method((callback) {
-                  callback
-                    ..requiredParameters
-                        .add(Parameter((b) => b..name = 'table'))
-                    ..body = Block((block) {
-                      var table = refer('table');
+            // up()
+            migrationClazz.methods.add(
+              Method((up) {
+                up
+                  ..name = 'up'
+                  ..returns = refer('void')
+                  ..annotations.add(refer('override'))
+                  ..requiredParameters.add(
+                    Parameter(
+                      (b) => b
+                        ..name = 'schema'
+                        ..type = refer('Schema'),
+                    ),
+                  )
+                  ..body = Block((block) {
+                    // (table) { ... }
+                    var callback = Method((callback) {
+                      callback
+                        ..requiredParameters.add(
+                          Parameter((b) => b..name = 'table'),
+                        )
+                        ..body = Block((block) {
+                          var table = refer('table');
 
-                      block.addExpression(
-                        (table.property('serial').call([literal('id')]))
-                            .property('primaryKey')
-                            .call([]),
-                      );
+                          block.addExpression(
+                            (table.property('serial').call([
+                              literal('id'),
+                            ])).property('primaryKey').call([]),
+                          );
 
-                      block.addExpression(
-                        table.property('date').call([
-                          literal('created_at'),
-                        ]),
-                      );
+                          block.addExpression(
+                            table.property('date').call([
+                              literal('created_at'),
+                            ]),
+                          );
 
-                      block.addExpression(
-                        table.property('date').call([
-                          literal('updated_at'),
-                        ]),
-                      );
+                          block.addExpression(
+                            table.property('date').call([
+                              literal('updated_at'),
+                            ]),
+                          );
+                        });
                     });
-                });
 
-                block.addExpression(refer('schema').property('create').call([
-                  literal(tableName),
-                  callback.closure,
-                ]));
-              });
-          }));
+                    block.addExpression(
+                      refer('schema').property('create').call([
+                        literal(tableName),
+                        callback.closure,
+                      ]),
+                    );
+                  });
+              }),
+            );
 
-          // down()
-          migrationClazz.methods.add(Method((down) {
-            down
-              ..name = 'down'
-              ..returns = refer('void')
-              ..annotations.add(refer('override'))
-              ..requiredParameters.add(Parameter((b) => b
-                ..name = 'schema'
-                ..type = refer('Schema')))
-              ..body = Block((block) {
-                block.addExpression(
-                  refer('schema').property('drop').call([
-                    literal(tableName),
-                  ]),
-                );
-              });
-          }));
-        }));
+            // down()
+            migrationClazz.methods.add(
+              Method((down) {
+                down
+                  ..name = 'down'
+                  ..returns = refer('void')
+                  ..annotations.add(refer('override'))
+                  ..requiredParameters.add(
+                    Parameter(
+                      (b) => b
+                        ..name = 'schema'
+                        ..type = refer('Schema'),
+                    ),
+                  )
+                  ..body = Block((block) {
+                    block.addExpression(
+                      refer(
+                        'schema',
+                      ).property('drop').call([literal(tableName)]),
+                    );
+                  });
+              }),
+            );
+          }),
+        );
     });
 
     // Save migration file
     var migrationDir = Directory.fromUri(
-        Directory.current.uri.resolve(argResults!['output-dir'] as String));
-    var migrationFile =
-        File.fromUri(migrationDir.uri.resolve('${rc.snakeCase}.dart'));
+      Directory.current.uri.resolve(argResults!['output-dir'] as String),
+    );
+    var migrationFile = File.fromUri(
+      migrationDir.uri.resolve('${rc.snakeCase}.dart'),
+    );
     if (!await migrationFile.exists()) {
       await migrationFile.create(recursive: true);
     }
 
     await migrationFile.writeAsString(
-        DartFormatter(languageVersion: DartFormatter.latestLanguageVersion)
-            .format(migrationLib.accept(DartEmitter()).toString()));
+      DartFormatter(
+        languageVersion: DartFormatter.latestLanguageVersion,
+      ).format(migrationLib.accept(DartEmitter()).toString()),
+    );
 
-    print(green.wrap(
-        '$checkmark Created migration file "${migrationFile.absolute.path}".'));
+    print(
+      green.wrap(
+        '$checkmark Created migration file "${migrationFile.absolute.path}".',
+      ),
+    );
 
     await depend(deps);
   }

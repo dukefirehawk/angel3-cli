@@ -7,22 +7,28 @@ class FileServiceGenerator extends ServiceGenerator {
   const FileServiceGenerator() : super('Persistent JSON File');
 
   @override
-  List<MakerDependency> get dependencies =>
-      const [MakerDependency('angel3_file_service', '^7.0.0')];
+  List<MakerDependency> get dependencies => const [
+    MakerDependency('angel3_file_service', '^8.0.0'),
+  ];
 
   @override
   bool get goesFirst => true;
 
   @override
   void applyToConfigureServer(
-      LibraryBuilder library,
-      MethodBuilder configureServer,
-      BlockBuilder block,
-      String? name,
-      String lower) {
-    configureServer.requiredParameters.add(Parameter((b) => b
-      ..name = 'dbDirectory'
-      ..type = refer('Directory')));
+    LibraryBuilder library,
+    MethodBuilder configureServer,
+    BlockBuilder block,
+    String? name,
+    String lower,
+  ) {
+    configureServer.requiredParameters.add(
+      Parameter(
+        (b) => b
+          ..name = 'dbDirectory'
+          ..type = refer('Directory'),
+      ),
+    );
   }
 
   @override
@@ -33,15 +39,17 @@ class FileServiceGenerator extends ServiceGenerator {
   }
 
   @override
-  Expression createInstance(LibraryBuilder library, MethodBuilder methodBuilder,
-      String name, String lower) {
-    library.directives.addAll([
-      Directive.import('package:file/file.dart'),
-    ]);
+  Expression createInstance(
+    LibraryBuilder library,
+    MethodBuilder methodBuilder,
+    String name,
+    String lower,
+  ) {
+    library.directives.addAll([Directive.import('package:file/file.dart')]);
     return refer('JsonFileService').newInstance([
-      refer('dbDirectory')
-          .property('childFile')
-          .call([literal('${pluralize(lower)}_db.json')])
+      refer(
+        'dbDirectory',
+      ).property('childFile').call([literal('${pluralize(lower)}_db.json')]),
     ]);
   }
 }

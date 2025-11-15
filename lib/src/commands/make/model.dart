@@ -17,18 +17,28 @@ class ModelCommand extends Command {
 
   ModelCommand() {
     argParser
-      ..addFlag('migration',
-          abbr: 'm',
-          help: 'Generate migrations when running `build_runner`.',
-          defaultsTo: true)
+      ..addFlag(
+        'migration',
+        abbr: 'm',
+        help: 'Generate migrations when running `build_runner`.',
+        defaultsTo: true,
+      )
       ..addFlag('orm', help: 'Generate angel_orm code.', negatable: false)
-      ..addFlag('serializable',
-          help: 'Generate angel_serialize annotations.', defaultsTo: true)
-      ..addOption('name',
-          abbr: 'n', help: 'Specifies a name for the model class.')
-      ..addOption('output-dir',
-          help: 'Specifies a directory to create the model class in.',
-          defaultsTo: 'lib/src/models');
+      ..addFlag(
+        'serializable',
+        help: 'Generate angel_serialize annotations.',
+        defaultsTo: true,
+      )
+      ..addOption(
+        'name',
+        abbr: 'n',
+        help: 'Specifies a name for the model class.',
+      )
+      ..addOption(
+        'output-dir',
+        help: 'Specifies a directory to create the model class in.',
+        defaultsTo: 'lib/src/models',
+      );
   }
 
   @override
@@ -61,7 +71,8 @@ class ModelCommand extends Command {
 
       if (needsSerialize) {
         modelLib.directives.add(
-            Directive.import('package:angel3_serialize/angel3_serialize.dart'));
+          Directive.import('package:angel3_serialize/angel3_serialize.dart'),
+        );
         deps.add(const MakerDependency('angel3_serialize', '^7.0.0'));
         deps.add(const MakerDependency('angel3_serialize_generator', '^7.0.0'));
         deps.add(const MakerDependency('build_runner', '^2.2.0'));
@@ -80,44 +91,49 @@ class ModelCommand extends Command {
         deps.add(const MakerDependency('angel3_orm', '^7.0.0'));
       }
 
-      modelLib.body.addAll([
-        Code("part '${rc.snakeCase}.g.dart';"),
-      ]);
+      modelLib.body.addAll([Code("part '${rc.snakeCase}.g.dart';")]);
 
-      modelLib.body.add(Class((modelClazz) {
-        modelClazz
-          ..abstract = true
-          ..name = needsSerialize ? '_${rc.pascalCase}' : rc.pascalCase
-          ..extend = refer('Model');
+      modelLib.body.add(
+        Class((modelClazz) {
+          modelClazz
+            ..abstract = true
+            ..name = needsSerialize ? '_${rc.pascalCase}' : rc.pascalCase
+            ..extend = refer('Model');
 
-        if (needsSerialize) {
-          // modelLib.addDirective(new PartBuilder('${rc.snakeCase}.g.dart'));
-          modelClazz.annotations.add(refer('serializable'));
-        }
-
-        if (argResults?['orm'] as bool) {
-          if (argResults?['migration'] as bool) {
-            modelClazz.annotations.add(refer('orm'));
-          } else {
-            modelClazz.annotations.add(
-                refer('Orm').call([], {'generateMigration': literalFalse}));
+          if (needsSerialize) {
+            // modelLib.addDirective(new PartBuilder('${rc.snakeCase}.g.dart'));
+            modelClazz.annotations.add(refer('serializable'));
           }
-        }
-      }));
+
+          if (argResults?['orm'] as bool) {
+            if (argResults?['migration'] as bool) {
+              modelClazz.annotations.add(refer('orm'));
+            } else {
+              modelClazz.annotations.add(
+                refer('Orm').call([], {'generateMigration': literalFalse}),
+              );
+            }
+          }
+        }),
+      );
     });
 
     // Save model file
     var outputDir = Directory.fromUri(
-        Directory.current.uri.resolve(argResults?['output-dir'] as String));
+      Directory.current.uri.resolve(argResults?['output-dir'] as String),
+    );
     var modelFile = File.fromUri(outputDir.uri.resolve('${rc.snakeCase}.dart'));
     if (!await modelFile.exists()) await modelFile.create(recursive: true);
 
     await modelFile.writeAsString(
-        DartFormatter(languageVersion: DartFormatter.latestLanguageVersion)
-            .format(modelLib.accept(DartEmitter()).toString()));
+      DartFormatter(
+        languageVersion: DartFormatter.latestLanguageVersion,
+      ).format(modelLib.accept(DartEmitter()).toString()),
+    );
 
-    print(green
-        .wrap('$checkmark Created model file "${modelFile.absolute.path}".'));
+    print(
+      green.wrap('$checkmark Created model file "${modelFile.absolute.path}".'),
+    );
 
     if (deps.isNotEmpty) await depend(deps);
   }

@@ -8,35 +8,43 @@ import 'package:angel3_cli/angel3_cli.dart';
 import 'package:io/ansi.dart';
 
 void main(List<String> args) async {
-  var runner = CommandRunner('angel3',
-      '$asciiArt\n\nCommand-line tools for the Angel3 framework.\n\nhttps://angel3-framework.web.app');
+  var runner = CommandRunner(
+    'angel3',
+    '$asciiArt\n\nCommand-line tools for the Angel3 framework.\n\nhttps://angel3-framework.web.app',
+  );
 
-  runner.argParser
-      .addFlag('verbose', help: 'Print verbose output.', negatable: false);
+  runner.argParser.addFlag(
+    'verbose',
+    help: 'Print verbose output.',
+    negatable: false,
+  );
 
   runner
     ..addCommand(DeployCommand())
     ..addCommand(DoctorCommand())
     ..addCommand(KeyCommand())
     ..addCommand(InitCommand())
-//    ..addCommand(InstallCommand())
+    //    ..addCommand(InstallCommand())
     ..addCommand(RenameCommand())
     ..addCommand(MakeCommand());
 
-  await runner.run(args).catchError((exc, st) {
-    if (exc is String) {
-      stdout.writeln(exc);
-    } else {
-      stderr.writeln('Oops, something went wrong: $exc');
-      if (args.contains('--verbose')) {
-        stderr.writeln(st);
-      }
-    }
+  await runner
+      .run(args)
+      .catchError((exc, st) {
+        if (exc is String) {
+          stdout.writeln(exc);
+        } else {
+          stderr.writeln('Oops, something went wrong: $exc');
+          if (args.contains('--verbose')) {
+            stderr.writeln(st);
+          }
+        }
 
-    exitCode = 1;
-  }).whenComplete(() {
-    stdout.write(resetAll.wrap(''));
-  });
+        exitCode = 1;
+      })
+      .whenComplete(() {
+        stdout.write(resetAll.wrap(''));
+      });
 }
 
 const String asciiArt2 = '''

@@ -62,26 +62,28 @@ class RenameCommand extends Command {
 }
 
 Future renamePubspec(Directory dir, String oldName, String newName) async {
-//  var pubspec = await loadPubspec(dir);
+  //  var pubspec = await loadPubspec(dir);
   print(cyan.wrap('Renaming your project to `$newName.`'));
 
   var pubspecFile = File.fromUri(dir.uri.resolve('pubspec.yaml'));
 
   if (await pubspecFile.exists()) {
     var contents = await pubspecFile.readAsString(), oldContents = contents;
-    contents =
-        contents.replaceAll(RegExp('name:\\s*$oldName'), 'name: $newName');
+    contents = contents.replaceAll(
+      RegExp('name:\\s*$oldName'),
+      'name: $newName',
+    );
 
     if (contents != oldContents) {
       await pubspecFile.writeAsString(contents);
     }
   }
 
-//  print(cyan
-//      .wrap('Note that this does not actually modify your `pubspec.yaml`.'));
-// TODO: https://github.com/dart-lang/pubspec_parse/issues/17
-//  var newPubspec =  Pubspec.fromJson(pubspec.toJson()..['name'] = newName);
-//  await newPubspec.save(dir);
+  //  print(cyan
+  //      .wrap('Note that this does not actually modify your `pubspec.yaml`.'));
+  // TODO: https://github.com/dart-lang/pubspec_parse/issues/17
+  //  var newPubspec =  Pubspec.fromJson(pubspec.toJson()..['name'] = newName);
+  //  await newPubspec.save(dir);
 }
 
 Future renameDartFiles(Directory dir, String oldName, String newName) async {
@@ -94,7 +96,8 @@ Future renameDartFiles(Directory dir, String oldName, String newName) async {
     await for (var yamlFile in configGlob.list(root: dir.absolute.path)) {
       if (yamlFile is File) {
         print(
-            'Replacing occurrences of "$oldName" with "$newName" in file "${yamlFile.absolute.path}"...');
+          'Replacing occurrences of "$oldName" with "$newName" in file "${yamlFile.absolute.path}"...',
+        );
         if (yamlFile is File) {
           var contents = (yamlFile as File).readAsStringSync();
           contents = contents.replaceAll(oldName, newName);
@@ -120,7 +123,9 @@ Future renameDartFiles(Directory dir, String oldName, String newName) async {
 
     if (content.contains('package:$oldName/$oldName.dart')) {
       return content.replaceFirst(
-          'package:$oldName/$oldName.dart', 'package:$newName/$newName.dart');
+        'package:$oldName/$oldName.dart',
+        'package:$newName/$newName.dart',
+      );
     }
 
     if (content.contains('package:$oldName/')) {
@@ -225,7 +230,7 @@ class RenamingVisitor extends RecursiveAstVisitor {
 
   @override
   void visitLibraryDirective(LibraryDirective node) {
-    var name = node.name2?.name ?? '';
+    var name = node.name?.name ?? '';
 
     if (name.startsWith(oldName)) {
       replace[[node.offset, node.end]] =

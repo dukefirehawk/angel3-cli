@@ -11,5 +11,5 @@ const List<ServiceGenerator> serviceGenerators = [
   FileServiceGenerator(),
   MongoServiceGenerator(),
   RethinkServiceGenerator(),
-  CustomServiceGenerator()
+  CustomServiceGenerator(),
 ];

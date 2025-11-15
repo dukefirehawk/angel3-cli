@@ -17,16 +17,22 @@ class ControllerCommand extends Command {
 
   ControllerCommand() {
     argParser
-      ..addFlag('websocket',
-          abbr: 'w',
-          help:
-              'Generates a WebSocketController, instead of an HTTP controller.',
-          negatable: false)
-      ..addOption('name',
-          abbr: 'n', help: 'Specifies a name for the model class.')
-      ..addOption('output-dir',
-          help: 'Specifies a directory to create the controller class in.',
-          defaultsTo: 'lib/src/routes/controllers');
+      ..addFlag(
+        'websocket',
+        abbr: 'w',
+        help: 'Generates a WebSocketController, instead of an HTTP controller.',
+        negatable: false,
+      )
+      ..addOption(
+        'name',
+        abbr: 'n',
+        help: 'Specifies a name for the model class.',
+      )
+      ..addOption(
+        'output-dir',
+        help: 'Specifies a directory to create the controller class in.',
+        defaultsTo: 'lib/src/routes/controllers',
+      );
   }
 
   @override
@@ -41,7 +47,7 @@ class ControllerCommand extends Command {
     }
 
     var deps = <MakerDependency>[
-      const MakerDependency('angel3_framework', '^7.0.0')
+      const MakerDependency('angel3_framework', '^7.0.0'),
     ];
 
     //${pubspec.name}.src.models.${rc.snakeCase}
@@ -50,76 +56,105 @@ class ControllerCommand extends Command {
     var controllerLib = Library((controllerLib) {
       if (argResults?['websocket'] as bool) {
         deps.add(const MakerDependency('angel3_websocket', '^7.0.0'));
-        controllerLib.directives
-            .add(Directive.import('package:angel3_websocket/server.dart'));
+        controllerLib.directives.add(
+          Directive.import('package:angel3_websocket/server.dart'),
+        );
       } else {
         controllerLib.directives.add(
-            Directive.import('package:angel3_framework/angel3_framework.dart'));
+          Directive.import('package:angel3_framework/angel3_framework.dart'),
+        );
       }
 
-      controllerLib.body.add(Class((clazz) {
-        clazz
-          ..name = '${rc.pascalCase}Controller'
-          ..extend = refer(argResults?['websocket'] as bool
-              ? 'WebSocketController'
-              : 'Controller');
-
-        if (argResults!['websocket'] as bool) {
-          // XController(AngelWebSocket ws) : super(ws);
-          clazz.constructors.add(Constructor((b) {
-            b
-              ..requiredParameters.add(Parameter((b) => b
-                ..name = 'ws'
-                ..type = refer('AngelWebSocket')))
-              ..initializers.add(Code('super(ws)'));
-          }));
-
-          clazz.methods.add(Method((meth) {
-            meth
-              ..name = 'hello'
-              ..returns = refer('void')
-              ..annotations
-                  .add(refer('ExposeWs').call([literal('get_${rc.snakeCase}')]))
-              ..requiredParameters.add(Parameter((b) => b
-                ..name = 'socket'
-                ..type = refer('WebSocketContext')))
-              ..body = Block((block) {
-                block.addExpression(refer('socket').property('send').call([
-                  literal('got_${rc.snakeCase}'),
-                  literalMap({'message': literal('Hello, world!')}),
-                ]));
-              });
-          }));
-        } else {
+      controllerLib.body.add(
+        Class((clazz) {
           clazz
-            ..annotations
-                .add(refer('Expose').call([literal('/${rc.snakeCase}')]))
-            ..methods.add(Method((meth) {
-              meth
-                ..name = 'hello'
-                ..returns = refer('String')
-                ..body = literal('Hello, world').returned.statement
-                ..annotations.add(refer('Expose').call([
-                  literal('/'),
-                ]));
-            }));
-        }
-      }));
+            ..name = '${rc.pascalCase}Controller'
+            ..extend = refer(
+              argResults?['websocket'] as bool
+                  ? 'WebSocketController'
+                  : 'Controller',
+            );
+
+          if (argResults!['websocket'] as bool) {
+            // XController(AngelWebSocket ws) : super(ws);
+            clazz.constructors.add(
+              Constructor((b) {
+                b
+                  ..requiredParameters.add(
+                    Parameter(
+                      (b) => b
+                        ..name = 'ws'
+                        ..type = refer('AngelWebSocket'),
+                    ),
+                  )
+                  ..initializers.add(Code('super(ws)'));
+              }),
+            );
+
+            clazz.methods.add(
+              Method((meth) {
+                meth
+                  ..name = 'hello'
+                  ..returns = refer('void')
+                  ..annotations.add(
+                    refer('ExposeWs').call([literal('get_${rc.snakeCase}')]),
+                  )
+                  ..requiredParameters.add(
+                    Parameter(
+                      (b) => b
+                        ..name = 'socket'
+                        ..type = refer('WebSocketContext'),
+                    ),
+                  )
+                  ..body = Block((block) {
+                    block.addExpression(
+                      refer('socket').property('send').call([
+                        literal('got_${rc.snakeCase}'),
+                        literalMap({'message': literal('Hello, world!')}),
+                      ]),
+                    );
+                  });
+              }),
+            );
+          } else {
+            clazz
+              ..annotations.add(
+                refer('Expose').call([literal('/${rc.snakeCase}')]),
+              )
+              ..methods.add(
+                Method((meth) {
+                  meth
+                    ..name = 'hello'
+                    ..returns = refer('String')
+                    ..body = literal('Hello, world').returned.statement
+                    ..annotations.add(refer('Expose').call([literal('/')]));
+                }),
+              );
+          }
+        }),
+      );
     });
 
     var outputDir = Directory.fromUri(
-        Directory.current.uri.resolve(argResults?['output-dir'] as String));
-    var controllerFile =
-        File.fromUri(outputDir.uri.resolve('${rc.snakeCase}.dart'));
+      Directory.current.uri.resolve(argResults?['output-dir'] as String),
+    );
+    var controllerFile = File.fromUri(
+      outputDir.uri.resolve('${rc.snakeCase}.dart'),
+    );
     if (!await controllerFile.exists()) {
       await controllerFile.create(recursive: true);
     }
     await controllerFile.writeAsString(
-        DartFormatter(languageVersion: DartFormatter.latestLanguageVersion)
-            .format(controllerLib.accept(DartEmitter()).toString()));
+      DartFormatter(
+        languageVersion: DartFormatter.latestLanguageVersion,
+      ).format(controllerLib.accept(DartEmitter()).toString()),
+    );
 
-    print(green.wrap(
-        '$checkmark Created controller file "${controllerFile.absolute.path}"'));
+    print(
+      green.wrap(
+        '$checkmark Created controller file "${controllerFile.absolute.path}"',
+      ),
+    );
 
     if (deps.isNotEmpty) await depend(deps);
   }

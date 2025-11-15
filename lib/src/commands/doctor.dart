@@ -23,8 +23,11 @@ class DoctorCommand extends Command {
       var git = await Process.start('git', ['--version']);
       if (await git.exitCode == 0) {
         var version = await git.stdout.transform(utf8.decoder).join();
-        print(green.wrap(
-            "$checkmark Git executable found: v${version.replaceAll('git version', '').trim()}"));
+        print(
+          green.wrap(
+            "$checkmark Git executable found: v${version.replaceAll('git version', '').trim()}",
+          ),
+        );
       } else {
         throw Exception('Git executable exit code not 0');
       }

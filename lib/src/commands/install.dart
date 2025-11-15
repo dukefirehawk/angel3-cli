@@ -14,9 +14,10 @@ import 'make/maker.dart';
 
 @Deprecated("No longer needed")
 class InstallCommand extends Command {
-  static const String repo = 'https://github.com/angel-dart/install.git';
-  static final Directory installRepo =
-      Directory.fromUri(homeDir.uri.resolve('./.angel/addons'));
+  static const String repo = 'https://github.com/dart-backend/angel';
+  static final Directory installRepo = Directory.fromUri(
+    homeDir.uri.resolve('./.angel/addons'),
+  );
 
   @override
   String get name => 'install';
@@ -49,11 +50,12 @@ class InstallCommand extends Command {
 
   @override
   Future run() async {
-    print(yellow.wrap(
+    print(
+      yellow.wrap(
         'WARNING: The `install` command is no longer considered necessary, and has been deprecated.\n'
-        'Expect it to be removed in an upcoming release.\n\n'
-        'See here: https://github.com/angel-dart/install.git\n\n'
-        'To stop seeing this, downgrade to `package:angel_cli@<=2.0.0`.'));
+        'Expect it to be removed in an upcoming release.',
+      ),
+    );
 
     if (argResults?['wipe'] as bool) {
       if (await installRepo.exists()) await installRepo.delete(recursive: true);
@@ -74,18 +76,16 @@ class InstallCommand extends Command {
       var pubspec = await loadPubspec();
 
       for (var packageName in argResults?.rest ?? <String>[]) {
-        var packageDir =
-            Directory.fromUri(installRepo.uri.resolve(packageName));
+        var packageDir = Directory.fromUri(
+          installRepo.uri.resolve(packageName),
+        );
 
         if (!await packageDir.exists()) {
           throw 'No add-on named "$packageName" is installed. You might need to run `angel3 install --update`.';
         }
         print('Installing $packageName...');
 
-        var values = {
-          'project_name': pubspec.name,
-          'pubspec': pubspec,
-        };
+        var values = {'project_name': pubspec.name, 'pubspec': pubspec};
 
         var globs = <Glob>[];
 
@@ -101,13 +101,15 @@ class InstallCommand extends Command {
             .whereType<MakerDependency>()
             .toList();
 
-        deps.addAll(projectPubspec.devDependencies.keys.map((k) {
-          var dep = projectPubspec.devDependencies[k];
-          if (dep is HostedDependency) {
-            return MakerDependency(k, dep.version.toString(), dev: true);
-          }
-          return null;
-        }).whereType<MakerDependency>());
+        deps.addAll(
+          projectPubspec.devDependencies.keys.map((k) {
+            var dep = projectPubspec.devDependencies[k];
+            if (dep is HostedDependency) {
+              return MakerDependency(k, dep.version.toString(), dev: true);
+            }
+            return null;
+          }).whereType<MakerDependency>(),
+        );
 
         await depend(deps);
 
@@ -121,7 +123,8 @@ class InstallCommand extends Command {
           // Loads globs
           if (cfg['templates'] is List) {
             globs.addAll(
-                (cfg['templates'] as List).map((p) => Glob(p.toString())));
+              (cfg['templates'] as List).map((p) => Glob(p.toString())),
+            );
           }
 
           if (cfg['values'] is Map) {
@@ -131,11 +134,15 @@ class InstallCommand extends Command {
               var desc = val[key]['description'] ?? key;
 
               if (val[key]['type'] == 'prompt') {
-                values[key as String] = prompts.get(desc.toString(),
-                    defaultsTo: val[key]['default']?.toString());
+                values[key as String] = prompts.get(
+                  desc.toString(),
+                  defaultsTo: val[key]['default']?.toString(),
+                );
               } else if (val[key]['type'] == 'choice') {
-                values[key as String] = prompts.choose(desc.toString(),
-                    (val[key]['choices'] as Iterable) as Iterable<Object>)!;
+                values[key as String] = prompts.choose(
+                  desc.toString(),
+                  (val[key]['choices'] as Iterable) as Iterable<Object>,
+                )!;
               }
             }
           }
@@ -151,7 +158,10 @@ class InstallCommand extends Command {
               var name = p.basename(entity.path);
               var newDir = Directory.fromUri(dst.uri.resolve(name));
               await merge(
-                  entity, newDir, prefix.isEmpty ? name : '$prefix/$name');
+                entity,
+                newDir,
+                prefix.isEmpty ? name : '$prefix/$name',
+              );
             } else if (entity is File &&
                 !entity.path.endsWith('angel_cli.yaml')) {
               var name = p.basename(entity.path);
@@ -171,7 +181,8 @@ class InstallCommand extends Command {
 
                   if (globs.any((g) => g.matches(path))) {
                     print(
-                        'Rendering Mustache template from ${entity.absolute.path} to ${targetFile.absolute.path}...');
+                      'Rendering Mustache template from ${entity.absolute.path} to ${targetFile.absolute.path}...',
+                    );
                     var contents = await entity.readAsString();
                     //var renderer = mustache.compile(contents);
                     //var generated = renderer(values);
@@ -180,7 +191,8 @@ class InstallCommand extends Command {
                     await targetFile.writeAsString(generated.toString());
                   } else {
                     print(
-                        'Copying ${entity.absolute.path} to ${targetFile.absolute.path}...');
+                      'Copying ${entity.absolute.path} to ${targetFile.absolute.path}...',
+                    );
                     await targetFile.parent.create(recursive: true);
                     await entity.copy(targetFile.absolute.path);
                   }
@@ -194,8 +206,11 @@ class InstallCommand extends Command {
           }
         }
 
-        await merge(Directory.fromUri(packageDir.uri.resolve('files')),
-            Directory.current, '');
+        await merge(
+          Directory.fromUri(packageDir.uri.resolve('files')),
+          Directory.current,
+          '',
+        );
         print('Successfully installed $packageName@${projectPubspec.version}.');
       }
     } else {
@@ -233,15 +248,11 @@ class InstallCommand extends Command {
         installRepo.absolute.path,
       ]);
     } else {
-      git = await Process.start(
-        'git',
-        [
-          'pull',
-          'origin',
-          'master',
-        ],
-        workingDirectory: installRepo.absolute.path,
-      );
+      git = await Process.start('git', [
+        'pull',
+        'origin',
+        'master',
+      ], workingDirectory: installRepo.absolute.path);
     }
 
     git
